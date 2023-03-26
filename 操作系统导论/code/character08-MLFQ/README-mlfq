@@ -1,0 +1,220 @@
+
+This program, mlfq.py, allows you to see how the MLFQ scheduler
+presented in this chapter behaves. As before, you can use this to generate
+problems for yourself using random seeds, or use it to construct a
+carefully-designed experiment to see how MLFQ works under different
+circumstances. To run the program, type:
+
+prompt> ./mlfq.py
+
+Use the help flag (-h) to see the options:
+
+Usage: mlfq.py [options]
+Options:
+  -h, --help            show this help message and exit
+  -s SEED, --seed=SEED  the random seed
+  -n NUMQUEUES, --numQueues=NUMQUEUES
+                        number of queues in MLFQ (if not using -Q)
+  -q QUANTUM, --quantum=QUANTUM
+                        length of time slice (if not using -Q)
+  -Q QUANTUMLIST, --quantumList=QUANTUMLIST
+                        length of time slice per queue level, 
+                        specified as x,y,z,... where x is the 
+                        quantum length for the highest-priority 
+                        queue, y the next highest, and so forth
+  -j NUMJOBS, --numJobs=NUMJOBS
+                        number of jobs in the system
+  -m MAXLEN, --maxlen=MAXLEN
+                        max run-time of a job (if random)
+  -M MAXIO, --maxio=MAXIO
+                        max I/O frequency of a job (if random)
+  -B BOOST, --boost=BOOST
+                        how often to boost the priority of all 
+                        jobs back to high priority (0 means never)
+  -i IOTIME, --iotime=IOTIME
+                        how long an I/O should last (fixed constant)
+  -S, --stay            reset and stay at same priority level 
+                        when issuing I/O
+  -l JLIST, --jlist=JLIST
+                        a comma-separated list of jobs to run, 
+                        in the form x1,y1,z1:x2,y2,z2:... where 
+                        x is start time, y is run time, and z 
+                        is how often the job issues an I/O request
+  -c                    compute answers for me
+]
+
+There are a few different ways to use the simulator. One way is to generate
+some random jobs and see if you can figure out how they will behave given the
+MLFQ scheduler. For example, if you wanted to create a randomly-generated
+three-job workload, you would simply type:
+
+prompt> ./mlfq.py -j 3
+
+What you would then see is the specific problem definition:
+
+Here is the list of inputs:
+OPTIONS jobs 3
+OPTIONS queues 3
+OPTIONS quantum length for queue  2 is  10
+OPTIONS quantum length for queue  1 is  10
+OPTIONS quantum length for queue  0 is  10
+OPTIONS boost 0
+OPTIONS ioTime 0
+OPTIONS stayAfterIO False
+
+
+For each job, three defining characteristics are given:
+  startTime : at what time does the job enter the system
+  runTime   : the total CPU time needed by the job to finish
+  ioFreq    : every ioFreq time units, the job issues an I/O
+              (the I/O takes ioTime units to complete)
+
+Job List:
+  Job  0: startTime   0 - runTime  84 - ioFreq   7
+  Job  1: startTime   0 - runTime  42 - ioFreq   2
+  Job  2: startTime   0 - runTime  51 - ioFreq   4
+
+Compute the execution trace for the given workloads.
+If you would like, also compute the response and turnaround
+times for each of the jobs.
+
+Use the -c flag to get the exact results when you are finished.
+
+This generates a random workload of three jobs (as specified), on the default
+number of queues with a number of default settings. If you run again with the
+solve flag on (-c), you'll see the same print out as above, plus the
+following:
+
+Execution Trace:
+
+[ time 0 ] JOB BEGINS by JOB 0
+[ time 0 ] JOB BEGINS by JOB 1
+[ time 0 ] JOB BEGINS by JOB 2
+[ time 0 ] Run JOB 0 at PRIORITY 2 [ TICKS 9 ALLOT 1 TIME 83 (of 84) ]
+[ time 1 ] Run JOB 0 at PRIORITY 2 [ TICKS 8 ALLOT 1 TIME 82 (of 84) ]
+[ time 2 ] Run JOB 0 at PRIORITY 2 [ TICKS 7 ALLOT 1 TIME 81 (of 84) ]
+[ time 3 ] Run JOB 0 at PRIORITY 2 [ TICKS 6 ALLOT 1 TIME 80 (of 84) ]
+[ time 4 ] Run JOB 0 at PRIORITY 2 [ TICKS 5 ALLOT 1 TIME 79 (of 84) ]
+[ time 5 ] Run JOB 0 at PRIORITY 2 [ TICKS 4 ALLOT 1 TIME 78 (of 84) ]
+[ time 6 ] Run JOB 0 at PRIORITY 2 [ TICKS 3 ALLOT 1 TIME 77 (of 84) ]
+[ time 7 ] IO_START by JOB 0
+IO DONE
+[ time 7 ] Run JOB 1 at PRIORITY 2 [ TICKS 9 ALLOT 1 TIME 41 (of 42) ]
+[ time 8 ] Run JOB 1 at PRIORITY 2 [ TICKS 8 ALLOT 1 TIME 40 (of 42) ]
+[ time 9 ] Run JOB 1 at PRIORITY 2 [ TICKS 7 ALLOT 1 TIME 39 (of 42) ]
+...
+
+Final statistics:
+  Job  0: startTime   0 - response   0 - turnaround 175
+  Job  1: startTime   0 - response   7 - turnaround 191
+  Job  2: startTime   0 - response   9 - turnaround 168
+
+  Avg  2: startTime n/a - response 5.33 - turnaround 178.00
+]
+
+The trace shows exactly, on a millisecond-by-millisecond time scale, what the
+scheduler decided to do. In this example, it begins by running Job 0 for 7 ms
+until Job 0 issues an I/O; this is entirely predictable, as Job 0's I/O
+frequency is set to 7 ms, meaning that every 7 ms it runs, it will issue an
+I/O and wait for it to complete before continuing. At that point, the
+scheduler switches to Job 1, which only runs 2 ms before issuing an I/O. 
+The scheduler prints the entire execution trace in this manner, and 
+finally also computes the response and turnaround times for each job
+as well as an average.
+该跟踪以毫秒为单位精确地显示了调度员决定这样做。在本例中，
+首先运行作业0 7毫秒直到Job 0发出I/O;这是完全可以预测的，
+因为作业0的I/O频率被设置为7毫秒，这意味着每运行7毫秒，
+它就会发出一个I/O并等待它完成后再继续。在那个时候
+调度器切换到作业1，在发出I/O之前只运行2毫秒。
+调度器以这种方式打印整个执行跟踪
+最后还计算每个作业的响应和周转时间以及一个平均值。
+
+You can also control various other aspects of the simulation. For example, you
+can specify how many queues you'd like to have in the system (-n) and what the
+quantum length should be for all of those queues (-q); if you want even more
+control and varied quanta length per queue, you can instead specify the length
+of the quantum (time slice) for each queue with -Q, e.g., -Q 10,20,30]
+simulates a scheduler with three queues, with the highest-priority queue
+having a 10-ms time slice, the next-highest a 20-ms time-slice, and the
+low-priority queue a 30-ms time slice.
+您还可以控制模拟的各种其他方面。
+例如，你可以指定系统中有多少个队列(-n)和所有这些队列应该是什么时间片长度(-q);
+如果你想要更多控制和改变每个队列的时间片长度，您可以指定每个队列的时间片长度(-Q)，
+例如，-Q 10,20,30，模拟具有三个队列的调度器，其中具有最高优先级队列有一个10毫秒的时间片，
+其次是20毫秒的时间片，而低优先级队列一个30毫秒的时间片。
+
+You can separately control how much time allotment there is per queue
+too. This can be set for all queues with -a, or per queue with -A, e.g., -A
+20,40,60 sets the time allotment per queue to 20ms, 40ms, and 60ms,
+respectively. 
+您也可以单独控制每个队列有多少时间分配。
+可以为所有队列设置的-a参数，也可以为每个队列设置的-A参数，
+例如，-A 20,40,60，意思是分别设置每个队列的分配时间为20ms, 40ms, 60ms。
+
+If you are randomly generating jobs, you can also control how long they might
+run for (-m), or how often they generate I/O (-M). If you, however, want more
+control over the exact characteristics of the jobs running in the system, you
+can use -l (lower-case L) or --jlist, which allows you to specify the exact
+set of jobs you wish to simulate. The list is of the form:
+x1,y1,z1:x2,y2,z2:... where x is the start time of the job, y is the run time
+(i.e., how much CPU time it needs), and z the I/O frequency (i.e., after
+running z ms, the job issues an I/O; if z is 0, no I/Os are issued).
+如果你是随机生成工作，你也可以控制工作的持续时间
+run for (-m)，或者它们生成I/O (-m)的频率。然而，如果你想要更多
+控制系统中运行的作业的确切特征，您可以
+可以使用-l(小写L)或——jlist，这允许您指定确切的
+希望模拟的作业集。列表的形式是:
+(x1, y1, z1: x2, y2, z2:…其中x是作业的开始时间，y是运行时间
+(即，它需要多少CPU时间)，z是I/O频率(即，在
+运行z毫秒，作业发出一个I/O;当z为0时，表示不下发I/ o)。
+
+For example, if you wanted to recreate the example in Figure 8.3
+you would specify a job list as follows:
+例如，如果您想重新创建图8.3中的示例
+你可以这样指定一个工作列表:
+
+prompt> ./mlfq.py --jlist 0,180,0:100,20,0 -q 10 
+
+Running the simulator in this way creates a three-level MLFQ, with each level
+having a 10-ms time slice. Two jobs are created: Job 0 which starts at time 0,
+runs for 180 ms total, and never issues an I/O; Job 1 starts at 100 ms, needs
+only 20 ms of CPU time to complete, and also never issues I/Os.
+以这种方式运行模拟器会创建一个三级MLFQ，每一级都是
+有一个10毫秒的时间片。创建了两个作业:从时间0开始的作业0;
+总共运行180毫秒，从不发出I/O;作业1开始于100毫秒，需要
+只有20毫秒的CPU时间来完成，而且从不发出I/O。
+
+Finally, there are three more parameters of interest. The -B flag, if set to a
+non-zero value, boosts all jobs to the highest-priority queue every N
+milliseconds, when invoked as such: 
+最后，还有三个值得关注的参数。-B标志，如果设置为非零值，
+每N次将所有作业提升到最高优先级队列毫秒，当这样调用时:
+
+  prompt> ./mlfq.py -B N 
+  
+The scheduler uses this feature to avoid starvation as discussed in the
+chapter. However, it is off by default.
+类中讨论的调度器使用此特性来避免饥饿一章。但是，默认情况下是关闭的。
+
+The -S flag invokes older Rules 4a and 4b, which means that if a job issues an
+I/O before completing its time slice, it will return to that same priority
+queue when it resumes execution, with its full time-slice intact.  This
+enables gaming of the scheduler.
+-S标志调用旧的规则4a和4b，这意味着如果作业发出
+I/O在完成它的时间片之前，它将返回到相同的优先级
+当它恢复执行时，保持完整的时间片不变。这
+启用调度程序的游戏。
+
+Finally, you can easily change how long an I/O lasts by using the -i flag. By
+default in this simplistic model, each I/O takes a fixed amount of time of 5
+milliseconds or whatever you set it to with this flag. 
+最后，您可以通过使用-i标志轻松更改I/O持续的时间。通过
+默认情况下，在这个简单的模型中，每个I/O花费固定的时间为5
+毫秒或者任何你用这个标志设置的值。
+
+You can also play around with whether jobs that just complete an I/O are moved
+to the head of the queue they are in or to the back, with the -I flag. Check
+it out, it's fun! 
+您还可以考虑是否移动刚刚完成I/O的作业
+返回到队列的头或后面，使用-I标志。检查
+它出来了，很有趣!
