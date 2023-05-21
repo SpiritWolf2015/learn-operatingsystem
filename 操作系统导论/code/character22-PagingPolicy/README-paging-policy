@@ -1,0 +1,254 @@
+
+This simulator, paging-policy.py, allows you to play around with different
+page-replacement policies. For example, let's examine how LRU performs with a
+series of page references with a cache of size 3:
+
+  0 1 2 0 1 3 0 3 1 2 1
+
+To do so, run the simulator as follows:
+
+prompt> ./paging-policy.py --addresses=0,1,2,0,1,3,0,3,1,2,1 
+                           --policy=LRU --cachesize=3 -c
+
+And what you would see is:
+
+ARG addresses 0,1,2,0,1,3,0,3,1,2,1
+ARG numaddrs 10
+ARG policy LRU
+ARG cachesize 3
+ARG maxpage 10
+ARG seed 0
+
+Solving...
+
+Access: 0 MISS LRU->      [br 0]<-MRU Replace:- [br Hits:0 Misses:1]
+Access: 1 MISS LRU->   [br 0, 1]<-MRU Replace:- [br Hits:0 Misses:2]
+Access: 2 MISS LRU->[br 0, 1, 2]<-MRU Replace:- [br Hits:0 Misses:3]
+Access: 0 HIT  LRU->[br 1, 2, 0]<-MRU Replace:- [br Hits:1 Misses:3]
+Access: 1 HIT  LRU->[br 2, 0, 1]<-MRU Replace:- [br Hits:2 Misses:3]
+Access: 3 MISS LRU->[br 0, 1, 3]<-MRU Replace:2 [br Hits:2 Misses:4]
+Access: 0 HIT  LRU->[br 1, 3, 0]<-MRU Replace:2 [br Hits:3 Misses:4]
+Access: 3 HIT  LRU->[br 1, 0, 3]<-MRU Replace:2 [br Hits:4 Misses:4]
+Access: 1 HIT  LRU->[br 0, 3, 1]<-MRU Replace:2 [br Hits:5 Misses:4]
+Access: 2 MISS LRU->[br 3, 1, 2]<-MRU Replace:0 [br Hits:5 Misses:5]
+Access: 1 HIT  LRU->[br 3, 2, 1]<-MRU Replace:0 [br Hits:6 Misses:5]
+]
+  
+The complete set of possible arguments for paging-policy is listed on the
+following page, and includes a number of options for varying the policy, how
+addresses are specified/generated, and other important parameters such as the
+size of the cache. 
+
+prompt> ./paging-policy.py --help
+Usage: paging-policy.py [options]
+
+Options:
+-h, --help      show this help message and exit
+-a ADDRESSES, --addresses=ADDRESSES
+                a set of comma-separated pages to access; 
+                -1 means randomly generate
+-f ADDRESSFILE, --addressfile=ADDRESSFILE
+                a file with a bunch of addresses in it
+-n NUMADDRS, --numaddrs=NUMADDRS
+                if -a (--addresses) is -1, this is the 
+                number of addrs to generate
+-p POLICY, --policy=POLICY
+                replacement policy: FIFO, LRU, LFU, OPT, 
+                                    UNOPT, RAND, CLOCK
+-b CLOCKBITS, --clockbits=CLOCKBITS
+                for CLOCK policy, how many clock bits to use
+-C CACHESIZE, --cachesize=CACHESIZE
+                size of the page cache, in pages
+-m MAXPAGE, --maxpage=MAXPAGE
+                if randomly generating page accesses, 
+                this is the max page number
+-s SEED, --seed=SEED  random number seed
+-N, --notrace   do not print out a detailed trace
+-c, --compute   compute answers for me
+]
+  
+As usual, "-c" is used to solve a particular problem, whereas without it, the
+accesses are just listed (and the program does not tell you whether or not a
+particular access is a hit or miss).
+
+To generate a random problem, instead of using "-a/--addresses" to pass in
+some page references, you can instead pass in "-n/--numaddrs" as the number of
+addresses the program should randomly generate, with "-s/--seed" used to
+specify a different random seed. For example:
+
+prompt> ./paging-policy.py -s 10 -n 3
+.. .
+Assuming a replacement policy of FIFO, and a cache of size 3 pages,
+figure out whether each of the following page references hit or miss
+in the page cache.
+  
+Access: 5  Hit/Miss?  State of Memory?
+Access: 4  Hit/Miss?  State of Memory?
+Access: 5  Hit/Miss?  State of Memory?
+]
+  
+As you can see, in this example, we specify "-n 3" which means the program
+should generate 3 random page references, which it does: 5, 7, and 5. The
+random seed is also specified (10), which is what gets us those particular
+numbers. After working this out yourself, have the program solve the problem
+for you by passing in the same arguments but with "-c" (showing just the
+relevant part here):
+
+prompt> ./paging-policy.py -s 10 -n 3 -c
+...
+Solving...
+
+Access: 5 MISS FirstIn->   [br 5] <-Lastin Replace:- [br Hits:0 Misses:1]
+Access: 4 MISS FirstIn->[br 5, 4] <-Lastin Replace:- [br Hits:0 Misses:2]
+Access: 5 HIT  FirstIn->[br 5, 4] <-Lastin Replace:- [br Hits:1 Misses:2]
+]
+
+The default policy is FIFO, though others are available, including LRU, MRU,
+OPT (the optimal replacement policy, which peeks into the future to see what
+is best to replace), UNOPT (which is the pessimal replacement), RAND (which
+does random replacement), and CLOCK (which does the clock algorithm). The
+CLOCK algorithm also takes another argument (-b), which states how many bits
+should be kept per page; the more clock bits there are, the better the
+algorithm should be at determining which pages to keep in memory.
+
+Other options include: "-C/--cachesize" which changes the size of the page
+cache; "-m/--maxpage" which is the largest page number that will be used if
+the simulator is generating references for you; and "-f/--addressfile" which
+lets you specify a file with addresses in them, in case you wish to get traces
+from a real application or otherwise use a long trace as input.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+这个模拟器是用来尝试不同的页面置换策略的。让我们以LRU算法和缓存大小为3的情况下，看一下一系列页面引用的表现：
+
+```
+0 1 2 0 1 3 0 3 1 2 1
+```
+
+要进行模拟，请按以下方式运行模拟器：
+
+```
+prompt> ./paging-policy.py --addresses=0,1,2,0,1,3,0,3,1,2,1 
+                           --policy=LRU --cachesize=3 -c
+```
+
+你将会看到如下输出：
+
+```
+ARG addresses 0,1,2,0,1,3,0,3,1,2,1
+ARG numaddrs 10
+ARG policy LRU
+ARG cachesize 3
+ARG maxpage 10
+ARG seed 0
+
+Solving...
+
+Access: 0 MISS LRU->      [br 0]<-MRU Replace:- [br Hits:0 Misses:1]
+Access: 1 MISS LRU->   [br 0, 1]<-MRU Replace:- [br Hits:0 Misses:2]
+Access: 2 MISS LRU->[br 0, 1, 2]<-MRU Replace:- [br Hits:0 Misses:3]
+Access: 0 HIT  LRU->[br 1, 2, 0]<-MRU Replace:- [br Hits:1 Misses:3]
+Access: 1 HIT  LRU->[br 2, 0, 1]<-MRU Replace:- [br Hits:2 Misses:3]
+Access: 3 MISS LRU->[br 0, 1, 3]<-MRU Replace:2 [br Hits:2 Misses:4]
+Access: 0 HIT  LRU->[br 1, 3, 0]<-MRU Replace:2 [br Hits:3 Misses:4]
+Access: 3 HIT  LRU->[br 1, 0, 3]<-MRU Replace:2 [br Hits:4 Misses:4]
+Access: 1 HIT  LRU->[br 0, 3, 1]<-MRU Replace:2 [br Hits:5 Misses:4]
+Access: 2 MISS LRU->[br 3, 1, 2]<-MRU Replace:0 [br Hits:5 Misses:5]
+Access: 1 HIT  LRU->[br 3, 2, 1]<-MRU Replace:0 [br Hits:6 Misses:5]
+```
+
+paging-policy.py的完整参数列表如下所示，其中包括许多选项，用于改变置换策略、指定/生成地址以及其他重要参数（如缓存大小）：
+
+```
+prompt> ./paging-policy.py --help
+Usage: paging-policy.py [options]
+
+Options:
+-h, --help      显示帮助信息并退出
+-a ADDRESSES, --addresses=ADDRESSES
+                一组以逗号分隔的要访问的页面；
+                -1 表示随机生成
+-f ADDRESSFILE, --addressfile=ADDRESSFILE
+                包含一组页面地址的文件
+-n NUMADDRS, --numaddrs=NUMADDRS
+                如果 -a (--addresses) 设置为 -
+
+1，则生成的地址数量
+-p POLICY, --policy=POLICY
+                置换策略：FIFO、LRU、LFU、OPT、UNOPT、RAND、CLOCK
+-b CLOCKBITS, --clockbits=CLOCKBITS
+                对于 CLOCK 策略，要使用的时钟位数
+-C CACHESIZE, --cachesize=CACHESIZE
+                页面缓存的大小，以页面为单位
+-m MAXPAGE, --maxpage=MAXPAGE
+                如果随机生成页面访问，则为最大页面编号
+-s SEED, --seed=SEED  随机数种子
+-N, --notrace   不打印详细跟踪信息
+-c, --compute   自动计算答案
+```
+
+通常情况下，使用 "-c" 来解决特定问题，而不使用它，只列出访问情况（程序不会告诉你某个访问是命中还是未命中）。
+
+要生成随机问题，可以使用 "-n/--numaddrs" 生成一些随机页面引用，其中 "-s/--seed" 用于指定不同的随机数种子。例如：
+
+```
+prompt> ./paging-policy.py -s 10 -n 3
+.. .
+假设使用 FIFO 置换策略和缓存大小为 3 个页面，确定下列页面引用在页面缓存中是否命中。
+
+Access: 5  Hit/Miss?  State of Memory?
+Access: 4  Hit/Miss?  State of Memory?
+Access: 5  Hit/Miss?  State of Memory?
+```
+
+在这个例子中，我们使用了 "-n 3" 来生成 3 个随机页面引用，它们分别是 5、7 和 5。随机种子也被指定为 10，这就是得到这些特定数字的原因。在自己计算完结果后，可以使用相同的参数再次运行程序来让它为你解决问题，只需加上 "-c" 参数（这里只显示相关部分）：
+
+```
+prompt> ./paging-policy.py -s 10 -n 3 -c
+...
+Solving...
+
+Access: 5 MISS FirstIn->   [br 5] <-Lastin Replace:- [br Hits:0 Misses:1]
+Access: 4 MISS FirstIn->[br 5, 4] <-Lastin Replace:- [br Hits:0 Misses:2]
+Access: 5 HIT  FirstIn->[br 5, 4] <-Lastin Replace:- [br Hits:1 Misses:2]
+```
+
+默认的置换策略是 FIFO，但也有其他选择，包括 LRU、MRU、OPT（最佳置换策略，通过查看未来来确定最佳替换）、UNOPT（最糟糕的置换策略）、RAND（随机置换策略）和 CLOCK（时钟算法）。CLOCK算法还需要另一个参数（-b），用于指定每个页面应保留多少个时钟位；时钟位越多，算法在确定保
+
+留哪些页面方面就越好。
+
+其他选项包括："-C/--cachesize"（更改页面缓存的大小）、"-m/--maxpage"（如果模拟器为您生成引用，则为使用的最大页面编号）和 "-f/--addressfile"（允许您指定包含地址的文件，以便从真实应用程序获取跟踪信息或以其他方式使用长跟踪作为输入）。
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+给定的代码是一个用Python编写的程序，用于模拟页面置换算法。它接受各种选项作为命令行参数，然后根据这些选项执行模拟。以下是代码的详细解释：
+
+1. 代码开始时导入了必要的模块：`random` 用于生成随机数，`OptionParser` 用于解析命令行选项。
+
+2. 定义了 `convert` 函数，用于将给定的大小字符串（例如 "4k"、"2M"、"1G"）转换为相应的字节数。
+
+3. `hfunc` 函数返回一个字符串，指示页面访问是命中还是未命中。
+
+4. `vfunc` 函数返回在页面置换过程中受影响的页面的字符串表示。
+
+5. 使用 `OptionParser` 解析命令行选项。可用选项包括：
+   - `-a` 或 `--addresses`：要访问的一组逗号分隔的页面。默认值为 `-1`，表示随机生成页面地址。
+   - `-f` 或 `--addressfile`：包含一组页面地址的文件。
+   - `-n` 或 `--numaddrs`：如果 `-a` 设置为 `-1`，则生成的页面地址数量。
+   - `-p` 或 `--policy`：要使用的页面置换策略：FIFO、LRU、OPT、UNOPT、RAND、CLOCK。
+   - `-b` 或 `--clockbits`：对于 CLOCK 策略要使用的时钟位数。
+   - `-C` 或 `--cachesize`：页面缓存的大小（以页面为单位）。
+   - `-m` 或 `--maxpage`：如果随机生成页面访问，则为最大页面编号。
+   - `-s` 或 `--seed`：随机数种子。
+   - `-N` 或 `--notrace`：不打印详细跟踪信息。
+   - `-c` 或 `--compute`：自动计算答案，无需用户交互。
+
+6. 程序打印出命令行选项的值。
+
+7. 根据 `options.solve` 和 `options.notrace` 的值，程序要么打印一个消息要求用户确定页面缓存中的命中/未命中情况，要么自动开始解决模拟。
+
+8. 模拟从根据选项选择的变量和数据结构初始化开始。
+
+9. 程序遍历页面地址列表（`addrList`），并执行页面置换模拟。
+
+10. 对于每个页面访问，程序检查页面是否存在于内存（缓存）中。如果是命中，则增加命中计数，如果是未命中，则增加未命中计数。
+
+11. 根据所选择的置换策略，程序确定是否需要替换页面。如果需要替换，则根据策略选择受影响的页面，并从内存中移除。
+
+12. 将访问的页面添加到内存中
