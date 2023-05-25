@@ -1,0 +1,207 @@
+
+This homework uses disk.py to familiarize you with how a modern hard
+drive works. It has a lot of different options, and unlike most of the other
+simulations, has a graphical animator to show you exactly what happens when
+the disk is in action. 
+
+[Note: there is also an experimental program, 'disk-precise.py', included
+in the download. This version of the simulator uses the python Decimal
+package for precise floating point computation, thus giving slightly
+better answers in some corner cases than 'disk.py'. However, it has
+not been very carefully tested, so use at your own caution.]
+
+Let's do a simple example first. To run the simulator and compute some basic
+seek, rotation, and transfer times, you first have to give a list of requests
+to the simulator. This can either be done by specifying the exact requests, or
+by having the simulator generate some randomly.
+
+We'll start by specifying a list of requests ourselves. Let's do a single
+request first:
+
+prompt> disk.py -a 10
+
+At this point you'll see:
+
+...
+REQUESTS [br '10']
+
+For the requests above, compute the seek, rotate, and transfer times.
+Use -c or the graphical mode (-G) to see the answers.
+
+
+To be able to compute the seek, rotation, and transfer times for this request,
+you'll have to know a little more information about the layout of sectors, the
+starting position of the disk head, and so forth. To see much of this
+information, run the simulator in graphical mode (-G):
+
+prompt> disk.py -a 10 -G
+
+
+At this point, a window should appear with our simple disk on it. 
+The disk head is positioned on the outside track, halfway through sector 6.
+As you can see, sector 10 (our example sector) is on the same track, about a
+third of the way around. The direction of rotation is counter-clockwise.
+To run the simulation, press the "s" key while the simulator window is
+highlighted.
+
+When the simulation completes, you should be able to see that the disk spent
+105 time units in rotation and 30 in transfer in order to access sector 10,
+with no seek time. Press "q" to close the simulator window.
+
+To calculate this (instead of just running the simulation), you would need to
+know a few details about the disk. First, the rotational speed is by default
+set to 1 degree per time unit. Thus, to make a complete revolution, it takes
+360 time units. Second, transfer begins and ends at the halfway point between
+sectors. Thus, to read sector 10, the transfer begins halfway between 9 and 10,
+and ends halfway between 10 and 11.  Finally, in the default disk, there are
+12 sectors per track, meaning that each sector takes up 30 degrees of the
+rotational space. Thus, to read a sector, it takes 30 time units (given our
+default speed of rotation).
+
+With this information in hand, you now should be able to compute the seek,
+rotation, and transfer times for accessing sector 10. Because the head starts
+on the same track as 10, there is no seek time. Because the disk rotates at
+1 degree / time unit, it takes 105 time units to get to the beginning of sector
+10, halfway between 9 and 10 (note that it is exactly 90 degrees to the middle
+of sector 9, and another 15 to the halfway point). Finally, to transfer the
+sector takes 30 time units.
+
+Now let's do a slightly more complex example:
+
+prompt> disk.py -a 10,11 -G
+
+
+In this case, we're transferring two sectors, 10 and 11. How long will it take?
+Try guessing before running the simulation!
+
+As you probably guessed, this simulation takes just 30 time units longer, to
+transfer the next sector 11. Thus, the seek and rotate times remain the same,
+but the transfer time for the requests is doubled. You can in fact see these
+sums across the top of the simulator window; they also get printed out to the
+console as follows:
+
+...
+Sector:  10  Seek:  0  Rotate:105  Transfer: 30  Total: 135
+Sector:  11  Seek:  0  Rotate:  0  Transfer: 30  Total:  30
+TOTALS      Seek:  0  Rotate:105  Transfer: 60  Total: 165
+
+
+Now let's do an example with a seek. Try the following set of requests:
+
+prompt> disk.py -a 10,18 -G
+
+
+To compute how long this will take, you need to know how long a seek will
+take. The distance between each track is by default 40 distance units, and the
+default rate of seeking is 1 distance unit per unit time. Thus, a seek from
+the outer track to the middle track takes 40 time units. 
+
+You'd also have to know the scheduling policy. The default is FIFO, though, so
+for now you can just compute the request times assuming the processing order
+matches the list specified via the "-a" flag.
+
+To compute how long it will take the disk to service these requests, we first
+compute how long it takes to access sector 10, which we know from above to be
+135 time units (105 rotating, 30 transferring). Once this request is complete,
+the disk begins to seek to the middle track where sector 18 lies, taking 40
+time units. Then the disk rotates to sector 18, and transfers it for 30 time
+units, thus completing the simulation. But how long does this final rotation
+take?
+
+To compute the rotational delay for 18, first figure out how long the disk
+would take to rotate from the end of the access to sector 10 to the beginning
+of the access to sector 18, assuming a zero-cost seek. As you can see from the
+simulator, sector 10 on the outer track is lined up with sector 22 on the middle
+track, and there are 7 sectors separating 22 from 18 (23, 12, 13, 14, 15, 16,
+and 17, as the disk spins counter-clockwise). Rotating through 7 sectors takes
+210 time units (30 per sector). However, the first part of this rotation is
+actually spent seeking to the middle track, for 40 time units. Thus, the
+actual rotational delay for accessing sector 18 is 210 minus 40, or 170 time
+units. Run the simulator to see this for yourself; note that you can run
+without graphics and with the "-c" flag to just see the results without
+seeing the graphics.
+
+prompt> ./disk.py -a 10,18 -c
+...
+Sector:  10  Seek:  0  Rotate:105  Transfer: 30  Total: 135
+Sector:  18  Seek: 40  Rotate:170  Transfer: 30  Total: 240
+TOTALS      Seek: 40  Rotate:275  Transfer: 60  Total: 375
+
+You should now have a basic idea of how the simulator works. The questions
+below will explore some of the different options, to better help you build a
+model of how a disk really works.
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+这份作业使用disk.py来帮助你熟悉现代硬盘的工作原理。它有很多不同的选项，与大多数其他模拟器不同，它有一个图形动画器，可以准确地显示磁盘在运行时的情况。
+
+[注意：下载中还包含一个实验性程序'disk-precise.py'。这个版本的模拟器使用python Decimal包进行精确的浮点计算，因此在一些极端情况下比'disk.py'给出更好的答案。但是，它没有经过非常仔细的测试，所以请谨慎使用。]
+
+让我们先做一个简单的例子。要运行模拟器并计算一些基本的寻道、旋转和传输时间，你首先需要给模拟器提供一个请求列表。这可以通过指定确切的请求来完成，也可以通过让模拟器随机生成一些请求来完成。
+
+我们首先自己指定一个请求列表。让我们先做一个单一的请求：
+
+prompt> disk.py -a 10
+
+此时你会看到：
+
+...
+REQUESTS [br '10']
+
+对于上面的请求，计算寻道、旋转和传输时间。
+使用-c或图形模式(-G)查看答案。
+
+为了能够计算这个请求的寻道、旋转和传输时间，你需要知道更多关于扇区布局、磁头起始位置等信息。要查看这些信息，可以在图形模式下运行模拟器(-G)：
+
+prompt> disk.py -a 10 -G
+
+此时，应该会出现一个窗口，上面有我们简单的磁盘。磁头位于外层轨道上，正好在扇区6中间。如你所见，扇区10（我们示例扇区）位于同一轨道上，大约在三分之一处。旋转方向是逆时针方向。
+要运行模拟器，请按下“s”键，同时突出显示模拟器窗口。
+
+当模拟完成后，你应该能够看到磁盘花费了105个时间单位进行旋转，并花费30个时间单位进行传输以访问扇区10，没有寻道时间。按“q”关闭模拟器窗口。
+
+要计算这个（而不是只运行模拟），你需要知道一些关于磁盘的细节。首先，默认情况下旋转速度为每个时间单位1度。因此，要完成一次完整的旋转需要360个时间单位。其次，在扇区之间开始和结束传输。因此，要读取扇区10，在9和10之间开始传输，在10和11之间结束传输。最后，在默认磁盘中每个轨道有12个扇区，这意味着每个扇区占用30度旋转空间。因此，要读取一个扇区需要30个时间单位（考虑到我们默认的旋转速度）。
+
+有了这些信息在手，你现在应该能够计算访问扇区10所需的寻道、旋转和传输时间。由于磁头开始时与10位于同一轨道上，因此没有寻道时间。由于磁盘以每度/时间单位的速度旋转，在到达扇区10（9和10之间）之前需要105个时间单位（注意到正好是90度到扇区9中间，并且另外15到半路）。最后，传输扇区需要30个时间单位。
+
+现在让我们做一个稍微复杂一点的例子：
+
+prompt> disk.py -a 10,11 -G
+
+在这种情况下，我们正在传输两个扇区：10和11。它需要多长时间？尝试在运行模拟之前猜测！
+
+正如你可能猜到的那样，这次模拟只需多花费30个时间单位来传输下一个扇区11.因此，寻找和旋转时间保持不变，但请求的传输时间加倍了。事实上你可以看到这些总和跨越了模拟器窗口顶部；它们也被打印到控制台如下：
+
+...
+Sector: 10 Seek: 0 Rotate:105 Transfer: 30 Total: 135
+Sector: 11 Seek: 0 Rotate: 0 Transfer: 30 Total: 30
+TOTALS Seek: 0 Rotate:105 Transfer: 60 Total: 165
+
+现在让我们做一个带有寻找的例子。尝试以下一组请求：
+
+prompt> disk.py -a 10,18 -G
+
+要计算这将花费多长时间，你需要知道寻找将花费多长时间。每条轨迹之间的距离默认为40个距离单位，默认寻找速率为每单位时间1个距离单位。因此从外层轨迹到中间轨迹寻找需要40个时间单位。
+
+你还必须知道调度策略。默认值为FIFO，但是现在你可以计算请求时间假设处理顺序与通过“-a”标志指定的列表匹配。
+
+要计算磁盘服务这些请求所需的时间，我们首先计算访问扇区10所需的时间，我们从上面知道是135个时间单位（105旋转、30传输）。完成此请求后，磁盘开始寻找中间轨迹上扇区18所在位置，需要40个时间单位。然后磁盘旋转到扇区18，并传输30个时间单位，从而完成模拟。但是最后一次旋转需要多长时间？
+
+要计算18号扇区的旋转延迟，在零成本搜索假设下首先确定从访问扇区10结束到访问扇区18开始磁盘将花费多长时间旋转。从模拟器中可以看出，在外层轨迹上的扇区10与中间轨迹上的扇区22对齐，并且22与18之间有7个分隔扇区（23、12、13、14、15、16和17）。旋转7个扇区需要210个时间单位（每个扇区30）。然而，在第一部分旋转中实际上花费了40个时间单位搜索中间轨迹。因此访问扇区18实际上只需170个时间单位（210减去40）。亲自运行模拟器查看；注意您可以不带图形并带有“-c”标志运行以仅查看结果而不查看图形。
+
+prompt> ./disk.py -a 10,18 -c
+...
+Sector: 10 Seek: 0 Rotate:105 Transfer: 30 Total: 135
+Sector: 18 Seek: 40 Rotate:170 Transfer: 30 Total: 240
+TOTALS Seek: 40 Rotate:275 Transfer: 60 Total: 375
+
+现在您应该对模拟器如何工作有了基本了解。下面的问题将探索一些不同选项以更好地帮助您建立对硬盘真正工作方式的模型。
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+该代码是一个磁盘调度算法的模拟器，使用Python的tkinter库进行图形化展示。它模拟了磁盘的寻道、旋转和传输过程，根据给定的请求队列和磁盘参数计算磁盘操作的时间。
+
+代码主要包含以下功能：
+- 初始化磁盘和请求队列参数
+- 创建图形界面窗口和绘制磁盘、磁头等图形元素
+- 实现按钮事件处理函数，包括开始、暂停和退出按钮
+- 实现核心的模拟和动画函数，用于更新磁盘状态和执行磁盘操作
+- 计算磁盘操作的时间，并在图形界面中显示
+
+代码中的TODO部分表示待完成的功能，包括实现其他调度算法、改进图形显示等。
